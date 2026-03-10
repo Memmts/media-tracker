@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Media Tracker - 3. Versiyon</title>
+<title>Media Tracker - Fonksiyonel Güncelleme</title>
 <style>
 body{font-family:Arial;background:#111827;color:white;margin:0;padding:20px;}
 h1{text-align:center;}
@@ -20,15 +20,19 @@ button{background:#22c55e;color:white;cursor:pointer;}
 </head>
 <body>
 <div class="container">
-<h1>🎮 Media Tracker 3. Versiyon</h1>
+<h1>🎮 Media Tracker Güncelleme</h1>
 
 <input id="title" placeholder="İsim">
-<select id="type">
+<select id="type" onchange="updateStatusOptions()">
 <option>Film</option>
 <option>Dizi</option>
 <option>Kitap</option>
 <option>Oyun</option>
 </select>
+
+<select id="status">
+</select>
+
 <button onclick="addItem()">Ekle</button>
 <input id="search" placeholder="Ara..." oninput="render()">
 <select id="filter" onchange="render()">
@@ -43,13 +47,11 @@ button{background:#22c55e;color:white;cursor:pointer;}
 </div>
 
 <script>
-// API anahtarları
-const OMDB_KEY = "e3e54e39"; // Film/Dizi
-const RAWG_KEY = "572d12c06ff044f2b90256e403f4bc3d"; // Oyun
+const OMDB_KEY = "BURAYA_OMDB_KEY";
+const RAWG_KEY = "BURAYA_RAWG_KEY";
 
 let items = JSON.parse(localStorage.getItem("items") || "[]");
 
-// Tür bazlı durum seçenekleri
 function getStatusOptions(type){
   switch(type){
     case "Film": case "Dizi": return ["İzliyorum","Tamamlandı"];
@@ -59,18 +61,31 @@ function getStatusOptions(type){
   }
 }
 
-function save(){localStorage.setItem("items",JSON.stringify(items))}
+function updateStatusOptions(){
+  let type = document.getElementById("type").value;
+  let statusSelect = document.getElementById("status");
+  statusSelect.innerHTML = "";
+  getStatusOptions(type).forEach(s => {
+    let opt = document.createElement("option");
+    opt.value = s; opt.textContent = s;
+    statusSelect.appendChild(opt);
+  });
+}
+
+// Başlangıçta status dropdown’u doldur
+updateStatusOptions();
 
 async function fetchInfo(item){
   try{
     if(item.type==="Film" || item.type==="Dizi"){
+      if(!OMDB_KEY){return;}
       let res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(item.title)}&apikey=${OMDB_KEY}`);
       let data = await res.json();
-      item.poster = data.Poster!=="N/A"?data.Poster:"https://via.placeholder.com/150x220?text=No+Image";
+      item.poster = data.Poster && data.Poster!=="N/A"?data.Poster:"https://via.placeholder.com/150x220?text=No+Image";
       item.score = data.imdbRating || "-";
       item.extra = data.Runtime || "-";
-    }
-    else if(item.type==="Oyun"){
+    } else if(item.type==="Oyun"){
+      if(!RAWG_KEY){return;}
       let res = await fetch(`https://api.rawg.io/api/games?key=${RAWG_KEY}&search=${encodeURIComponent(item.title)}`);
       let data = await res.json();
       if(data.results && data.results.length>0){
@@ -79,13 +94,12 @@ async function fetchInfo(item){
         item.score = g.metacritic || "-";
         item.extra = g.released || "-";
       }
-    }
-    else if(item.type==="Kitap"){
+    } else if(item.type==="Kitap"){
       let res = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(item.title)}`);
       let data = await res.json();
       if(data.docs && data.docs.length>0){
         let b = data.docs[0];
-        item.poster = b.cover_i ? `https://covers.openlibrary.org/b/id/${b.cover_i}-L.jpg`:"https://via.placeholder.com/150x220?text=No+Image";
+        item.poster = b.cover_i ? `https://covers.openlibrary.org/b/id/${b.cover_i}-L.jpg` : "https://via.placeholder.com/150x220?text=No+Image";
         item.score = "-";
         item.extra = b.first_publish_year || "-";
       }
@@ -96,9 +110,8 @@ async function fetchInfo(item){
 async function addItem(){
   let title = document.getElementById("title").value;
   let type = document.getElementById("type").value;
+  let status = document.getElementById("status").value;
   if(!title){alert("Başlık gir!"); return;}
-  let status = getStatusOptions(type)[0]; // varsayılan ilk durum
-
   let newItem = {title,type,status,poster:"https://via.placeholder.com/150x220?text=Yükleniyor",score:"-",extra:"-"};
   items.push(newItem);
   save();
@@ -115,6 +128,8 @@ function deleteItem(index){
     render();
   }
 }
+
+function save(){localStorage.setItem("items",JSON.stringify(items))}
 
 function render(){
   let grid = document.getElementById("grid");
