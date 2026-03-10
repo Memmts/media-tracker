@@ -3,68 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Media Tracker</title>
-
+<title>Media Tracker - Fonksiyonel</title>
 <style>
 body{
-font-family: Arial;
-background:#0f172a;
-color:white;
-margin:0;
-padding:20px;
+  font-family: Arial;
+  background:#111827;
+  color:white;
+  margin:0;
+  padding:20px;
 }
-
-h1{
-text-align:center;
-}
-
-.container{
-max-width:900px;
-margin:auto;
-}
-
-input,select,button{
-padding:10px;
-margin:5px;
-border-radius:6px;
-border:none;
-}
-
-button{
-background:#22c55e;
-color:white;
-cursor:pointer;
-}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-gap:15px;
-margin-top:20px;
-}
-
-.card{
-background:#1e293b;
-padding:10px;
-border-radius:10px;
-}
-
-.card img{
-width:100%;
-border-radius:6px;
-}
-
-.type{
-font-size:12px;
-opacity:0.7;
-}
+h1{text-align:center;}
+.container{max-width:900px;margin:auto;}
+input,select,button{padding:8px;margin:4px;border-radius:6px;border:none;}
+button{background:#22c55e;color:white;cursor:pointer;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:15px;margin-top:20px;}
+.card{background:#1f2937;padding:10px;border-radius:10px;position:relative;}
+.card img{width:100%;border-radius:6px;}
+.card .delete{position:absolute;top:5px;right:5px;background:red;color:white;border:none;border-radius:4px;padding:2px 6px;cursor:pointer;}
+.card .status, .card .score{font-size:12px;opacity:0.8;}
 </style>
 </head>
-
 <body>
-
 <div class="container">
-
 <h1>🎮 Media Tracker</h1>
 
 <input id="title" placeholder="İsim">
@@ -74,61 +34,79 @@ opacity:0.7;
 <option>Kitap</option>
 <option>Oyun</option>
 </select>
-
 <input id="poster" placeholder="Poster URL">
+<select id="status">
+<option>Backlog</option>
+<option>Oynuyorum / İzliyorum / Okuyorum</option>
+<option>Tamamlandı</option>
+</select>
+<input id="score" type="number" placeholder="Puan (0-10)" min="0" max="10">
 
 <button onclick="addItem()">Ekle</button>
+<input id="search" placeholder="Ara..." oninput="render()">
+<select id="filter" onchange="render()">
+<option value="all">Tümü</option>
+<option value="Film">Film</option>
+<option value="Dizi">Dizi</option>
+<option value="Kitap">Kitap</option>
+<option value="Oyun">Oyun</option>
+</select>
 
 <div class="grid" id="grid"></div>
-
 </div>
 
 <script>
+let items = JSON.parse(localStorage.getItem("items") || "[]");
 
-let items = JSON.parse(localStorage.getItem("items") || "[]")
-
-function save(){
-localStorage.setItem("items",JSON.stringify(items))
-}
+function save(){localStorage.setItem("items",JSON.stringify(items))}
 
 function render(){
+  let grid=document.getElementById("grid");
+  grid.innerHTML="";
+  let searchVal = document.getElementById("search").value.toLowerCase();
+  let filterVal = document.getElementById("filter").value;
 
-let grid=document.getElementById("grid")
-grid.innerHTML=""
+  items.forEach((item,index)=>{
+    if(filterVal!=="all" && item.type!==filterVal) return;
+    if(searchVal && !item.title.toLowerCase().includes(searchVal)) return;
 
-items.forEach(item=>{
-
-let card=document.createElement("div")
-card.className="card"
-
-card.innerHTML=`
-<img src="${item.poster}">
-<h3>${item.title}</h3>
-<div class="type">${item.type}</div>
-`
-
-grid.appendChild(card)
-
-})
-
+    let card=document.createElement("div");
+    card.className="card";
+    card.innerHTML=`
+      <button class="delete" onclick="deleteItem(${index})">X</button>
+      <img src="${item.poster}" alt="${item.title}">
+      <h3>${item.title}</h3>
+      <div class="status">${item.status}</div>
+      <div class="score">Puan: ${item.score || "-"}</div>
+      <div class="type">${item.type}</div>
+    `;
+    grid.appendChild(card);
+  });
 }
 
 function addItem(){
+  let title=document.getElementById("title").value;
+  let type=document.getElementById("type").value;
+  let poster=document.getElementById("poster").value || "https://via.placeholder.com/150x220?text=No+Image";
+  let status=document.getElementById("status").value;
+  let score=document.getElementById("score").value;
 
-let title=document.getElementById("title").value
-let type=document.getElementById("type").value
-let poster=document.getElementById("poster").value
+  if(!title) {alert("Başlık gir!"); return;}
 
-items.push({title,type,poster})
-
-save()
-render()
-
+  items.push({title,type,poster,status,score});
+  save();
+  render();
 }
 
-render()
+function deleteItem(index){
+  if(confirm("Silmek istediğine emin misin?")){
+    items.splice(index,1);
+    save();
+    render();
+  }
+}
 
+render();
 </script>
-
 </body>
 </html>
