@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Media Tracker</title>
+
+<style>
+body{
+font-family: Arial;
+background:#0f172a;
+color:white;
+margin:0;
+padding:20px;
+}
+
+h1{
+text-align:center;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+}
+
+input,select,button{
+padding:10px;
+margin:5px;
+border-radius:6px;
+border:none;
+}
+
+button{
+background:#22c55e;
+color:white;
+cursor:pointer;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+gap:15px;
+margin-top:20px;
+}
+
+.card{
+background:#1e293b;
+padding:10px;
+border-radius:10px;
+}
+
+.card img{
+width:100%;
+border-radius:6px;
+}
+
+.type{
+font-size:12px;
+opacity:0.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🎮 Media Tracker</h1>
+
+<input id="title" placeholder="İsim">
+<select id="type">
+<option>Film</option>
+<option>Dizi</option>
+<option>Kitap</option>
+<option>Oyun</option>
+</select>
+
+<input id="poster" placeholder="Poster URL">
+
+<button onclick="addItem()">Ekle</button>
+
+<div class="grid" id="grid"></div>
+
+</div>
+
+<script>
+
+let items = JSON.parse(localStorage.getItem("items") || "[]")
+
+function save(){
+localStorage.setItem("items",JSON.stringify(items))
+}
+
+function render(){
+
+let grid=document.getElementById("grid")
+grid.innerHTML=""
+
+items.forEach(item=>{
+
+let card=document.createElement("div")
+card.className="card"
+
+card.innerHTML=`
+<img src="${item.poster}">
+<h3>${item.title}</h3>
+<div class="type">${item.type}</div>
+`
+
+grid.appendChild(card)
+
+})
+
+}
+
+function addItem(){
+
+let title=document.getElementById("title").value
+let type=document.getElementById("type").value
+let poster=document.getElementById("poster").value
+
+items.push({title,type,poster})
+
+save()
+render()
+
+}
+
+render()
+
+</script>
+
+</body>
+</html>
